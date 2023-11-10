@@ -31,7 +31,7 @@ def show_detection_on_seq_data(seq_root, detections):
             plot_bounding_boxes(img, detections[i], 'runs/plots/'+seq_root+'/', i)
 
 
-
 if __name__ == "__main__":
     detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_11.pkl')
+    # print(detection)
     show_detection_on_seq_data('3 min aquisition_1_C03_11', detection)

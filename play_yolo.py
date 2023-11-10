@@ -34,7 +34,6 @@ def read_list_from_file(file_path):
     return lst
 
 
-
 # Function to remove the background and keep only the circular well
 def remove_background(image):
     # Convert the image to grayscale
@@ -106,19 +105,18 @@ def select_object(result_list):
     max_cell_width = 200
     selected = []
     for i in range(len(result_list)):
-        if abs(result_list[i][0] - result_list[i][1]) < max_cell_width and abs(result_list[i][0] - result_list[i][1]) != 0:
+        if abs(result_list[i][0] - result_list[i][1]) < max_cell_width and \
+                abs(result_list[i][2] - result_list[i][3]) < max_cell_width:
             selected.append(result_list[i])
     return selected
-
-
 
 
 if __name__ == "__main__":
     # Model
     model = torch.hub.load('ultralytics/yolov5', 'yolov5s',  _verbose=False)
 
-    model.conf = 0.01  # NMS confidence threshold
-    model.iou = 0.15  # NMS IoU threshold
+    model.conf = 0.001  # NMS confidence threshold
+    model.iou = 0.2  # NMS IoU threshold
           # agnostic = False  # NMS class-agnostic
           # multi_label = False  # NMS multiple labels per box
           # classes = None  # (optional list) filter by class, i.e. = [0, 15, 16] for COCO persons, cats and dogs
@@ -129,9 +127,7 @@ if __name__ == "__main__":
     # detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_11.pkl')
     # print(detection)
 
-
     # plot_bounding_boxes(test_img, selected)
-
 
     # #      xmin    ymin    xmax   ymax  confidence  class    name
     # # 0  749.50   43.50  1148.0  704.5    0.874023      0  person
