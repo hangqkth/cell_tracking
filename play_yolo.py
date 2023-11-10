@@ -1,6 +1,5 @@
 import cv2
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
+
 import torch
 from tqdm import tqdm
 import os
@@ -84,7 +83,7 @@ def remove_background(image):
 def run_yolo_on_seq_imgs(seq_root, yolo_model):
     img_list = [os.path.join(seq_root, f) for f in os.listdir(seq_root)]
     detection_list = []
-    for i in tqdm(range(len(img_list))[:5]):
+    for i in tqdm(range(len(img_list))):
         img = cv2.imread(img_list[i])
         img = remove_background(img)
         results = yolo_model([img], size=640)  # batch of images
@@ -107,45 +106,28 @@ def select_object(result_list):
     max_cell_width = 200
     selected = []
     for i in range(len(result_list)):
-        if abs(result_list[i][0] - result_list[i][1]) < max_cell_width:
+        if abs(result_list[i][0] - result_list[i][1]) < max_cell_width and abs(result_list[i][0] - result_list[i][1]) != 0:
             selected.append(result_list[i])
     return selected
 
 
-def plot_bounding_boxes(image, bounding_boxes):
-    # Create figure and axes
-    fig, ax = plt.subplots(1)
-    # Display the image
-    ax.imshow(image)
-    # Add bounding boxes to the image
-    for box in bounding_boxes:
-        x_min, x_max, y_min, y_max = box[0], box[1], box[2], box[3]
-        width = x_max - x_min
-        height = y_max - y_min
-        # Create a rectangle patch
-        rect = patches.Rectangle((x_min, y_min), width, height, linewidth=2, edgecolor='r', facecolor='none')
-        # Add the patch to the Axes
-        ax.add_patch(rect)
-    # Show the plot
-    plt.show()
-
 
 
 if __name__ == "__main__":
-    # # Model
-    # model = torch.hub.load('ultralytics/yolov5', 'yolov5s',  _verbose=False)
-    #
-    # model.conf = 0.01  # NMS confidence threshold
-    # model.iou = 0.15  # NMS IoU threshold
-    #       # agnostic = False  # NMS class-agnostic
-    #       # multi_label = False  # NMS multiple labels per box
-    #       # classes = None  # (optional list) filter by class, i.e. = [0, 15, 16] for COCO persons, cats and dogs
-    #       # max_det = 1000  # maximum number of detections per image
-    #       # amp = False  # Automatic Mixed Precision (AMP) inference
+    # Model
+    model = torch.hub.load('ultralytics/yolov5', 'yolov5s',  _verbose=False)
 
-    # run_yolo_on_seq_imgs('3 min aquisition_1_C03_11', yolo_model=model)
-    detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_11.pkl')
-    print(detection)
+    model.conf = 0.01  # NMS confidence threshold
+    model.iou = 0.15  # NMS IoU threshold
+          # agnostic = False  # NMS class-agnostic
+          # multi_label = False  # NMS multiple labels per box
+          # classes = None  # (optional list) filter by class, i.e. = [0, 15, 16] for COCO persons, cats and dogs
+          # max_det = 1000  # maximum number of detections per image
+          # amp = False  # Automatic Mixed Precision (AMP) inference
+
+    run_yolo_on_seq_imgs('3 min aquisition_1_C03_11', yolo_model=model)
+    # detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_11.pkl')
+    # print(detection)
 
 
     # plot_bounding_boxes(test_img, selected)
