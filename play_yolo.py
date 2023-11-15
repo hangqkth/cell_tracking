@@ -1,5 +1,4 @@
 import cv2
-
 import torch
 from tqdm import tqdm
 import os
@@ -42,6 +41,7 @@ def remove_background(image):
     # Find the edges of the grayscale image
     # (This image is just to understand how the Hough Circle Transform works.)
     edges = cv2.Canny(gray, threshold1=80, threshold2=180)
+    print(edges.shape)
 
     # Use the Hough Circle Transform to detect the circular well
     circles = cv2.HoughCircles(
@@ -82,7 +82,7 @@ def remove_background(image):
 def run_yolo_on_seq_imgs(seq_root, yolo_model):
     img_list = [os.path.join(seq_root, f) for f in os.listdir(seq_root)]
     detection_list = []
-    for i in tqdm(range(len(img_list))):
+    for i in tqdm(range(len(img_list))[1:]):
         img = cv2.imread(img_list[i])
         img = remove_background(img)
         results = yolo_model([img], size=640)  # batch of images
@@ -95,7 +95,7 @@ def run_yolo_on_seq_imgs(seq_root, yolo_model):
 
 def read_result(result_tensor):
     detection = []
-    for i in range(len(result_tensor['xmin'])):
+    for i in range(len(result_tensor['xmin'])[1:]):
         detection.append([result_tensor['xmin'][i], result_tensor['xmax'][i],
                           result_tensor['ymin'][i], result_tensor['ymax'][i], ])
     return detection
