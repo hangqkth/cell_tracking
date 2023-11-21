@@ -41,7 +41,6 @@ def remove_background(image):
     # Find the edges of the grayscale image
     # (This image is just to understand how the Hough Circle Transform works.)
     edges = cv2.Canny(gray, threshold1=80, threshold2=180)
-    print(edges.shape)
 
     # Use the Hough Circle Transform to detect the circular well
     circles = cv2.HoughCircles(
@@ -95,7 +94,7 @@ def run_yolo_on_seq_imgs(seq_root, yolo_model):
 
 def read_result(result_tensor):
     detection = []
-    for i in range(len(result_tensor['xmin'])[1:]):
+    for i in range(len(result_tensor['xmin'])):
         detection.append([result_tensor['xmin'][i], result_tensor['xmax'][i],
                           result_tensor['ymin'][i], result_tensor['ymax'][i], ])
     return detection
@@ -113,17 +112,20 @@ def select_object(result_list):
 
 if __name__ == "__main__":
     # Model
+
     model = torch.hub.load('ultralytics/yolov5', 'yolov5s',  _verbose=False)
 
-    model.conf = 0.001  # NMS confidence threshold
-    model.iou = 0.2  # NMS IoU threshold
-          # agnostic = False  # NMS class-agnostic
-          # multi_label = False  # NMS multiple labels per box
-          # classes = None  # (optional list) filter by class, i.e. = [0, 15, 16] for COCO persons, cats and dogs
-          # max_det = 1000  # maximum number of detections per image
-          # amp = False  # Automatic Mixed Precision (AMP) inference
 
-    run_yolo_on_seq_imgs('3 min aquisition_1_C03_11', yolo_model=model)
+
+    model.conf = 0.4  # NMS confidence threshold
+    model.iou = 0.2  # NMS IoU threshold
+    # agnostic = False  # NMS class-agnostic
+    # multi_label = False  # NMS multiple labels per box
+    # classes = None  # (optional list) filter by class, i.e. = [0, 15, 16] for COCO persons, cats and dogs
+    # max_det = 1000  # maximum number of detections per image
+    # amp = False  # Automatic Mixed Precision (AMP) inference
+
+    run_yolo_on_seq_imgs('3 min aquisition_1_C03_14', yolo_model=model)
     # detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_11.pkl')
     # print(detection)
 
