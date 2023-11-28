@@ -9,17 +9,18 @@ def plot_bounding_boxes(image, bounding_boxes, root, idx):
     fig, ax = plt.subplots(1)
     # Display the image
     ax.imshow(image, interpolation='none')
+    plt.axis('off')
     # Add bounding boxes to the image
     for box in bounding_boxes:
         x_min, x_max, y_min, y_max = box[0], box[1], box[2], box[3]
         width = x_max - x_min
         height = y_max - y_min
         # Create a rectangle patch
-        rect = patches.Rectangle((x_min, y_min), width, height, linewidth=2, edgecolor='r', facecolor='none')
+        rect = patches.Rectangle((x_min, y_min), width, height, linewidth=2, edgecolor='g', facecolor='none')
         # Add the patch to the Axes
         ax.add_patch(rect)
     # Show the plot
-    plt.savefig(root+str(idx)+'.png')
+    plt.savefig(root+str(idx)+'.png',  bbox_inches='tight', pad_inches=0)
 
 
 def show_detection_on_seq_data(seq_root, detections):
@@ -33,6 +34,6 @@ def show_detection_on_seq_data(seq_root, detections):
 
 
 if __name__ == "__main__":
-    detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_14.pkl')
+    detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_11.pkl')
     # print(detection)
-    show_detection_on_seq_data('3 min aquisition_1_C03_14', detection)
+    show_detection_on_seq_data('3 min aquisition_1_C03_11', detection)

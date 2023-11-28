@@ -128,10 +128,9 @@ def train_and_val(train_loader, val_loader, lr, model, epochs, criterion, device
                                                                    display_labels=str_labels)
                     plt.tight_layout()
                     plt.show()
-                    # torch.save(model.state_dict(), './saved_model/cell_net.pth')
+                    torch.save(model.state_dict(), './saved_model/cell_net.pth')
                 print("\rTest Epoch: {:d} | Test loss: {:.4f} | Test Accuracy: {:.4%} | Best evaluation loss: {:.6f}".format(epoch + 1, loss_avg, acc, best_loss_test))
                 time.sleep(0.1)
-
 
 
 if __name__ == "__main__":
