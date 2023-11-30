@@ -3,6 +3,8 @@ from scipy.optimize import linear_sum_assignment
 import matplotlib.pyplot as plt
 import os
 import pickle
+
+
 def hungarian_association(prev_cells, current_cells):
     cost_matrix = np.zeros((len(prev_cells), len(current_cells)))
 
@@ -34,7 +36,9 @@ def nearest_neighbor_association(prev_cells, current_cells):
         associations.append((i, best_match_index))
 
     return associations
-def associate(cells, type = None):
+
+
+def associate(cells, type=None):
 
     for i in range(len(cells)-1):
         prev_cells = np.array(cells[i])
@@ -68,18 +72,18 @@ def associate(cells, type = None):
             output_folder = 'frames_hungarian'
 
         os.makedirs(output_folder, exist_ok=True)
-        plt.savefig(os.path.join(output_folder, f'frame_{i}.png'))
-        #plt.show()
+        # plt.savefig(os.path.join(output_folder, f'frame_{i}.png'))
+        plt.show()
 
 # Example usage:
 # Assume prev_cells and current_cells are lists of 2D coordinates of cells in the previous and current images
 # Replace these lists with your actual data
 if __name__ == "__main__":
 
-    with open('all_centers.pkl', 'rb') as file:
+    with open('./runs/detect/3 min aquisition_1_C03_11.pkl', 'rb') as file:
         centers = pickle.load(file)
 
-    associate(centers, "Nearest")
+    associate(centers, "hungarian")
 # cells = []
 # cells.append(np.array([[1, 2], [3, 4], [5, 6]]))
 # cells.append(np.array([[1.2, 2.5], [2.8, 4.9], [5.2, 6.4]]))
