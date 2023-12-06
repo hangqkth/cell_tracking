@@ -118,7 +118,7 @@ if __name__ == "__main__":
     model = torch.hub.load('ultralytics/yolov5', 'yolov5s',  _verbose=False)
 
     model.conf = 0.5  # NMS confidence threshold
-    model.iou = 0.1  # NMS IoU threshold
+    model.iou = 0.1  # NMS IoU threshold 0.5
     # agnostic = False  # NMS class-agnostic
     # multi_label = False  # NMS multiple labels per box
     # classes = None  # (optional list) filter by class, i.e. = [0, 15, 16] for COCO persons, cats and dogs

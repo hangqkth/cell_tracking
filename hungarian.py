@@ -5,7 +5,7 @@ import os
 import pickle
 
 
-def hungarian_association(prev_cells, current_cells):
+def hungarian_ac(prev_cells, current_cells):
     cost_matrix = np.zeros((len(prev_cells), len(current_cells)))
 
     for i in range(len(prev_cells)):
@@ -47,9 +47,9 @@ def associate(cells, type=None):
         if type == "Nearest":
             associations = nearest_neighbor_association(prev_cells, current_cells)
         else:
-            associations = hungarian_association(prev_cells, current_cells)
+            associations = hungarian_ac(prev_cells, current_cells)
 
-        print(associations)
+
         plt.clf()
         plt.scatter(prev_cells[:, 0], prev_cells[:, 1], color='blue', label='Previous Image')
         plt.scatter(current_cells[:, 0], current_cells[:, 1], color='red', label='Current Image')
@@ -75,9 +75,11 @@ def associate(cells, type=None):
         # plt.savefig(os.path.join(output_folder, f'frame_{i}.png'))
         plt.show()
 
+
 # Example usage:
 # Assume prev_cells and current_cells are lists of 2D coordinates of cells in the previous and current images
 # Replace these lists with your actual data
+
 if __name__ == "__main__":
 
     with open('./runs/detect/3 min aquisition_1_C03_11.pkl', 'rb') as file:
