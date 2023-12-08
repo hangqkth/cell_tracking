@@ -2,6 +2,7 @@ import pickle
 import numpy as np
 from hungarian import hungarian_ac
 from kalman_two_frame import kf_one_step
+import matplotlib.pyplot as plt
 
 
 def read_list_from_file(file_path):
@@ -98,14 +99,73 @@ def track_cell_centers(all_centers):
                 y_k, match_idx = adjust_associate(x_k, y_k, match_idx, cov_list)
             x_k_next, cov_list = kf_prediction(x_k, y_k, cov_list, match_idx)
             x_k = x_k_next
-            print(x_k)
+
+        all_x.append(x_k)
+        all_association.append(match_idx)
+    # print(len(all_centers))
+    # print(len(all_x))
+    # print(len(all_association))
+
+    return [all_centers, all_x, all_association]
+
+
+def draw_trajectory(info):
+    all_centers, all_x, all_association = info[0], info[1], info[2]
+    trajectories = [[all_x[0][i]] for i in range(len(all_x[0]))]
+    points = [i for i in range(len(all_x[0]))]  # the i_th element in all_x[f] is saved in the points[i]_th list in trajectories
+
+    for f in range(len(all_association)):
+        # print(len(all_x[f]), len(all_association[f]))
+        # print(all_association[f])
+        if len(all_association[f]) > len(points):
+            trajectories.append([])
+            points.append(len(trajectories)-1)
+
+        new_points = points.copy()
+        for m in range(len(all_association[f])):
+            one_match = all_association[f][m]
+            last_idx = one_match[0]
+            next_idx = one_match[1]
+            trajectories[points[last_idx]].append(all_x[f][next_idx])
+            new_points[next_idx] = points[last_idx]
+        # print(points)
+
+        points = new_points.copy()
+
+
+    # Plot the trajectory
+
+    plt.figure(figsize=(16, 12))  # Adjust the figure size as needed
+    for l in range(len(trajectories)):
+        print(len(trajectories[l]))
+        # Extract x and y coordinates separately
+        x_coords = [coord[0] for coord in trajectories[l]]
+        y_coords = [coord[1] for coord in trajectories[l]]
+
+        plt.plot(x_coords, y_coords, marker='o', linestyle='-')
+        plt.title('Trajectory Plot')
+        plt.xlabel('X-axis')
+        plt.ylabel('Y-axis')
+        plt.grid(True)
+
+    plt.legend(["cell "+str(l) for l in range(len(trajectories))])
+    plt.xlim([0, 1388])
+    plt.ylim([0, 1040])
+    plt.show()
+
+
+
+
+
 
 
 if __name__ == "__main__":
     detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_11.pkl')
     # print(detection)
     all_centers = get_centers('3 min aquisition_1_C03_11', detection)
-    track_cell_centers(all_centers)
+    tracking_info = track_cell_centers(all_centers)
+
+    draw_trajectory(tracking_info)
 
 
 
