@@ -53,7 +53,7 @@ def adjust_associate(x, y, origin_ac, cov_list):
     matched_x = [match[0] for match in origin_ac]
     matched_y = [match[1] for match in origin_ac]
     if l_x > l_y:  # YOLO miss some cells, copy unmatched x_m for y_n
-        y_new, new_ac = y, origin_ac
+        y_new, new_ac = y.copy(), origin_ac.copy()
         c = 0
         for i in range(l_x):
             if i not in matched_x:
@@ -63,7 +63,7 @@ def adjust_associate(x, y, origin_ac, cov_list):
         return y_new, new_ac
 
     elif l_x < l_y:  # some cell is divided, find parent for the newborn cells
-        x_new, new_ac, cov_new = x, origin_ac, cov_list
+        x_new, new_ac, cov_new = x.copy(), origin_ac.copy(), cov_list.copy()
         c = 0
         for i in range(l_y):
             if i not in matched_y:  # new cell is y[i]
@@ -85,20 +85,45 @@ def track_cell_centers(all_centers):
 
         # initialization
         if f == 0:
-            x_k = y_k  # initialized prediction, no need association
+            x_k = y_k.copy()  # initialized prediction, no need association
             # predict next frame based on last prediction and current observation
             match_idx = hungarian_ac(np.array(x_k), np.array(y_k))
             x_k_next, cov_list = kf_prediction(x_k, y_k, [np.zeros((2, 2)) for n in range(len(x_k))], match_idx)
-            x_k = x_k_next  # update x_k for next loop
+            x_k = x_k_next.copy()  # update x_k for next loop
         else:
             # association
-            match_idx = hungarian_ac(np.array(x_k), np.array(y_k))
+            match_idx = hungarian_ac(np.array(x_k).copy(), np.array(y_k).copy())
+
+            # adjust if length does not match
             if len(x_k) < len(y_k):
-                x_k, match_idx, cov_list = adjust_associate(x_k, y_k, match_idx, cov_list)
+                x_k, match_idx, cov_list = adjust_associate(x_k.copy(), y_k.copy(), match_idx.copy(), cov_list.copy())
             elif len(x_k) > len(y_k):
-                y_k, match_idx = adjust_associate(x_k, y_k, match_idx, cov_list)
-            x_k_next, cov_list = kf_prediction(x_k, y_k, cov_list, match_idx)
-            x_k = x_k_next
+                y_k, match_idx = adjust_associate(x_k.copy(), y_k.copy(), match_idx.copy(), cov_list.copy())
+
+
+            # adjust for too long distance
+            distance_list = []
+            for c in range(len(match_idx)):
+                distance_list.append(np.linalg.norm(np.array(x_k[match_idx[c][0]])-np.array(y_k[match_idx[c][1]]), 2))
+
+            if max(distance_list) > 20:
+                if len(distance_list) > 1:
+                    max_index = distance_list.index(max(distance_list))
+                    modified_lst = distance_list[:max_index] + distance_list[max_index + 1:]
+                    second_max_index = modified_lst.index(max(modified_lst))
+                    if second_max_index >= max_index:
+                        second_max_index += 1
+
+                    if distance_list[second_max_index] > 20:
+                        print("found one")
+                        temp1, temp2 = match_idx[max_index][1], match_idx[second_max_index][1]
+                        temp3, temp4 = match_idx[max_index][0], match_idx[second_max_index][0]
+                        match_idx[max_index] = (temp3, temp2)
+                        match_idx[second_max_index] = (temp4, temp1)
+
+
+            x_k_next, cov_list = kf_prediction(x_k.copy(), y_k.copy(), cov_list.copy(), match_idx.copy())
+            x_k = x_k_next.copy()
 
         all_x.append(x_k)
         all_association.append(match_idx)
@@ -135,14 +160,14 @@ def draw_trajectory(info):
 
     # Plot the trajectory
 
-    plt.figure(figsize=(16, 12))  # Adjust the figure size as needed
+    plt.figure(figsize=(12, 9))  # Adjust the figure size as needed
     for l in range(len(trajectories)):
         print(len(trajectories[l]))
         # Extract x and y coordinates separately
         x_coords = [coord[0] for coord in trajectories[l]]
         y_coords = [coord[1] for coord in trajectories[l]]
 
-        plt.plot(x_coords, y_coords, marker='o', linestyle='-')
+        plt.scatter(x_coords, y_coords, marker='o', linestyle='-', )
         plt.title('Trajectory Plot')
         plt.xlabel('X-axis')
         plt.ylabel('Y-axis')
