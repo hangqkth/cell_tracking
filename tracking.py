@@ -25,7 +25,7 @@ def get_centers_from_bounding_boxes(bounding_boxes):
     return centers
 
 
-def get_centers(seq_root, detections):
+def get_centers(detections):
     # img_list = [os.path.join(seq_root, f) for f in os.listdir(seq_root)]
     all_cell_centers = []
     for i in range(len(detections)):
@@ -106,20 +106,20 @@ def track_cell_centers(all_centers):
             for c in range(len(match_idx)):
                 distance_list.append(np.linalg.norm(np.array(x_k[match_idx[c][0]])-np.array(y_k[match_idx[c][1]]), 2))
 
-            if max(distance_list) > 20:
-                if len(distance_list) > 1:
-                    max_index = distance_list.index(max(distance_list))
-                    modified_lst = distance_list[:max_index] + distance_list[max_index + 1:]
-                    second_max_index = modified_lst.index(max(modified_lst))
-                    if second_max_index >= max_index:
-                        second_max_index += 1
-
-                    if distance_list[second_max_index] > 20:
-                        print("found one")
-                        temp1, temp2 = match_idx[max_index][1], match_idx[second_max_index][1]
-                        temp3, temp4 = match_idx[max_index][0], match_idx[second_max_index][0]
-                        match_idx[max_index] = (temp3, temp2)
-                        match_idx[second_max_index] = (temp4, temp1)
+            # if max(distance_list) > 10:
+            #     if len(distance_list) > 1:
+            #         max_index = distance_list.index(max(distance_list))
+            #         modified_lst = distance_list[:max_index] + distance_list[max_index + 1:]
+            #         second_max_index = modified_lst.index(max(modified_lst))
+            #         if second_max_index >= max_index:
+            #             second_max_index += 1
+            #
+            #         if distance_list[second_max_index] > 5:
+            #             print("found one")
+            #             temp1, temp2 = match_idx[max_index][1], match_idx[second_max_index][1]
+            #             temp3, temp4 = match_idx[max_index][0], match_idx[second_max_index][0]
+            #             match_idx[max_index] = (temp3, temp2)
+            #             match_idx[second_max_index] = (temp4, temp1)
 
 
             x_k_next, cov_list = kf_prediction(x_k.copy(), y_k.copy(), cov_list.copy(), match_idx.copy())
@@ -138,6 +138,7 @@ def draw_trajectory(info):
     all_centers, all_x, all_association = info[0], info[1], info[2]
     trajectories = [[all_x[0][i]] for i in range(len(all_x[0]))]
     points = [i for i in range(len(all_x[0]))]  # the i_th element in all_x[f] is saved in the points[i]_th list in trajectories
+
 
     for f in range(len(all_association)):
         # print(len(all_x[f]), len(all_association[f]))
@@ -165,15 +166,35 @@ def draw_trajectory(info):
         print(len(trajectories[l]))
         # Extract x and y coordinates separately
         x_coords = [coord[0] for coord in trajectories[l]]
-        y_coords = [coord[1] for coord in trajectories[l]]
+        y_coords = [1040-coord[1] for coord in trajectories[l]]
+        colors = ['blue', 'magenta', 'green', 'orange', 'purple']
+        for c in range(len(x_coords)-1):
+            x, y = x_coords[c], y_coords[c]
+            x1, y1 = x_coords[c+1], y_coords[c+1]
+            if abs(x-x1)+abs(y-y1) < 80:
+                plt.plot([x, x1], [y, y1], marker='o', linestyle='-', c=colors[l], markersize=5)
+        # plt.plot(x_coords, y_coords, marker='o', linestyle='-', )
 
-        plt.scatter(x_coords, y_coords, marker='o', linestyle='-', )
+        # plt.scatter(x_coords, y_coords, marker='o', linestyle='-', )
+
         plt.title('Trajectory Plot')
         plt.xlabel('X-axis')
         plt.ylabel('Y-axis')
         plt.grid(True)
 
-    plt.legend(["cell "+str(l) for l in range(len(trajectories))])
+    plt.legend(["cell "+str(l+1) for l in range(len(trajectories))])
+    plt.xlim([0, 1388])
+    plt.ylim([0, 1040])
+    plt.show()
+
+    plt.figure(figsize=(12, 9))
+    for i in range(len(all_centers)):
+        for p in range(len(all_centers[i])):
+            plt.scatter(all_centers[i][p][0], 1040-all_centers[i][p][1], marker='o', c='b')
+    plt.title('Observation Plot')
+    plt.xlabel('X-axis')
+    plt.ylabel('Y-axis')
+    plt.grid(True)
     plt.xlim([0, 1388])
     plt.ylim([0, 1040])
     plt.show()
@@ -181,13 +202,10 @@ def draw_trajectory(info):
 
 
 
-
-
-
 if __name__ == "__main__":
     detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_11.pkl')
     # print(detection)
-    all_centers = get_centers('3 min aquisition_1_C03_11', detection)
+    all_centers = get_centers(detection)
     tracking_info = track_cell_centers(all_centers)
 
     draw_trajectory(tracking_info)
