@@ -1,6 +1,6 @@
 import pickle
 import time
-
+import copy
 import numpy as np
 from hungarian import hungarian_ac
 from kalman_two_frame import kf_one_step
@@ -65,6 +65,9 @@ def adjust_associate(x, y, origin_ac, cov_list):
         return y_new, new_ac
 
     elif l_x < l_y:  # some cell is divided, find parent for the newborn cells
+        # print(x)
+        # print(y)
+        # print(origin_ac)
         x_new, new_ac, cov_new = x.copy(), origin_ac.copy(), cov_list.copy()
         c = 0
         for i in range(l_y):
@@ -74,6 +77,8 @@ def adjust_associate(x, y, origin_ac, cov_list):
                 cov_new.append(cov_list[np.argmin(distances)])
                 new_ac.append((l_x+c, i))
                 c += 1
+                # print(new_ac)
+                # print(x_new)
         return x_new, new_ac, cov_new
 
 
@@ -126,6 +131,7 @@ def track_cell_centers(all_centers):
 
             x_k_next, cov_list = kf_prediction(x_k.copy(), y_k.copy(), cov_list.copy(), match_idx.copy())
             x_k = x_k_next.copy()
+            # print(x_k)
 
         all_x.append(x_k)
         all_association.append(match_idx)
@@ -139,25 +145,45 @@ def track_cell_centers(all_centers):
 def draw_trajectory(info):
     all_centers, all_x, all_association = info[0], info[1], info[2]
     trajectories = [[all_x[0][i]] for i in range(len(all_x[0]))]
-    points = [i for i in range(len(all_x[0]))]  # the i_th element in all_x[f] is saved in the points[i]_th list in trajectories
+    points = {}
+    # points[str(i)] means the i_th element in all_x[f] is saved in point_dict[str(i)]_th list in trajectories
+    for i in range(len(all_x[0])):
+        points[str(i)] = i
+    points = {'0': 0}
+
     start_frame = [0]
-
-    for f in range(len(all_association)):
-        # print(len(all_x[f]), len(all_association[f]))
+    # print(len(all_x), len(all_association))
+    for f in range(len(all_association)-1):
+        # print(len(all_x[f+1]), len(all_association[f]), len(points))
+        # print(all_x[f+1])
         # print(all_association[f])
-        if len(all_association[f]) > len(points):
-            trajectories.append([])
-            start_frame.append(f)
-            points.append(len(trajectories)-1)
 
-        new_points = points.copy()
-        for m in range(len(all_association[f])):
-            one_match = all_association[f][m]
+        current_x = all_x[f+1]
+        current_match = all_association[f]
+
+        # if len(all_x[f+1]) > len(points):
+        #     trajectories.append([])
+        #     start_frame.append(f)
+        #     points.append(len(trajectories)-1)
+        #
+        new_points = {}
+        last_idx_list, next_idx_list = [], []
+        for m in range(len(current_match)):
+            one_match = current_match[m]
             last_idx = one_match[0]
             next_idx = one_match[1]
-            trajectories[points[last_idx]].append(all_x[f][next_idx])
-            new_points[next_idx] = points[last_idx]
-        # print(points)
+            last_idx_list.append(last_idx)
+            next_idx_list.append(next_idx)
+            trajectories[points[str(last_idx)]].append(current_x[next_idx])
+            new_points[str(next_idx)] = points[str(last_idx)]
+
+        if len(current_match) < len(current_x):
+            print(next_idx_list)
+            start_frame.append(f+1)
+            for i in range(len(current_x)):
+                if i not in next_idx_list:
+                    trajectories.append([current_x[i]])
+                    new_points[str(i)] = len(trajectories) - 1
 
         points = new_points.copy()
 
@@ -204,36 +230,44 @@ def draw_trajectory(info):
     # plt.show()
     # print(start_frame)
     # print(len(trajectories[0]))
-
+    for t in trajectories:
+        print(t)
     return trajectories, start_frame
 
 
 def plot_tracking(traces, start_f):
     activated_cells = []
-    for f in range(len(traces[0])):
+    # for f in range(len(traces[0])):
+    for f in range(30):
         if len(activated_cells) < len(traces):
             if f == start_f[len(activated_cells)]:
                 activated_cells.append(len(activated_cells))
-
+        print(activated_cells)
         for c in activated_cells:
-            x1, y1 = traces[c][f-start_f[c]][0], traces[c][f-start_f[c]][1]
+            x1, y1 = traces[c][f-start_f[c]-1][0], traces[c][f-start_f[c]-1][1]
             plt.scatter(x1, 1040-y1)
             plt.xlim([0, 1388])
             plt.ylim([0, 1040])
+            if f > 20:
+                print(f)
+                print(x1, y1)
         plt.legend(["cell " + str(c+1) for c in activated_cells])
         plt.title('T='+str(f))
         plt.show()
         time.sleep(0.2)
-    print(activated_cells)
+    # print(activated_cells)
 
 
 if __name__ == "__main__":
     detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_11.pkl')
     # print(detection)
     all_centers = get_centers(detection)
-    tracking_info = track_cell_centers(all_centers)
+    tracking_info = track_cell_centers(all_centers[:30])
 
     traces, start_f = draw_trajectory(tracking_info)
+
+    print(start_f)
+
     plot_tracking(traces, start_f)
 
 
