@@ -41,11 +41,17 @@ def get_centers(detections):
 
 def kf_prediction(x_list, y_list, cov_list, ac_idx):
     x_list_next = []
+    new_x_dict, new_cov_dict = {}, {}
     cov_list_next = []
     for c in range(len(ac_idx)):
         x_new, cov_new = kf_one_step(x_list[ac_idx[c][0]], y_list[ac_idx[c][1]], cov_list[c])
-        x_list_next.append(x_new)
-        cov_list_next.append(cov_new)
+        new_x_dict[str(ac_idx[c][1])] = x_new
+        new_cov_dict[str(ac_idx[c][1])] = cov_new
+        # x_list_next.append(x_new)
+        # cov_list_next.append(cov_new)
+    for i in range(len(x_list)):
+        x_list_next.append(new_x_dict[str(i)])
+        cov_list_next.append(new_cov_dict[str(i)])
     return x_list_next, cov_list_next
 
 
@@ -62,6 +68,7 @@ def adjust_associate(x, y, origin_ac, cov_list):
                 y_new.append(x[i])
                 new_ac.append((i, l_y+c))
                 c += 1
+
         return y_new, new_ac
 
     elif l_x < l_y:  # some cell is divided, find parent for the newborn cells
@@ -93,6 +100,7 @@ def track_cell_centers(all_centers):
         # initialization
         if f == 0:
             x_k = y_k.copy()  # initialized prediction, no need association
+            all_x.append(x_k)
             # predict next frame based on last prediction and current observation
             match_idx = hungarian_ac(np.array(x_k), np.array(y_k))
             x_k_next, cov_list = kf_prediction(x_k, y_k, [np.zeros((2, 2)) for n in range(len(x_k))], match_idx)
@@ -108,10 +116,10 @@ def track_cell_centers(all_centers):
                 y_k, match_idx = adjust_associate(x_k.copy(), y_k.copy(), match_idx.copy(), cov_list.copy())
 
 
-            # adjust for too long distance
-            distance_list = []
-            for c in range(len(match_idx)):
-                distance_list.append(np.linalg.norm(np.array(x_k[match_idx[c][0]])-np.array(y_k[match_idx[c][1]]), 2))
+            # # adjust for too long distance
+            # distance_list = []
+            # for c in range(len(match_idx)):
+            #     distance_list.append(np.linalg.norm(np.array(x_k[match_idx[c][0]])-np.array(y_k[match_idx[c][1]]), 2))
 
             # if max(distance_list) > 10:
             #     if len(distance_list) > 1:
@@ -127,13 +135,17 @@ def track_cell_centers(all_centers):
             #             temp3, temp4 = match_idx[max_index][0], match_idx[second_max_index][0]
             #             match_idx[max_index] = (temp3, temp2)
             #             match_idx[second_max_index] = (temp4, temp1)
-
-
+            # print(f)
+            # print(x_k)
+            # print(y_k)
+            # print(match_idx)
+            all_x.append(x_k)
             x_k_next, cov_list = kf_prediction(x_k.copy(), y_k.copy(), cov_list.copy(), match_idx.copy())
             x_k = x_k_next.copy()
-            # print(x_k)
 
-        all_x.append(x_k)
+        # print("x_k to saved:", x_k)
+        # print("match_idx to saved:", match_idx)
+        # all_x.append(x_k)
         all_association.append(match_idx)
     # print(len(all_centers))
     # print(len(all_x))
@@ -158,8 +170,11 @@ def draw_trajectory(info):
         # print(all_x[f+1])
         # print(all_association[f])
 
-        current_x = all_x[f+1]
-        current_match = all_association[f]
+        current_x = all_x[f+1].copy()
+        current_match = all_association[f].copy()
+        # print(f+1)
+        # print(current_x)
+        # print(current_match)
 
         # if len(all_x[f+1]) > len(points):
         #     trajectories.append([])
@@ -178,7 +193,7 @@ def draw_trajectory(info):
             new_points[str(next_idx)] = points[str(last_idx)]
 
         if len(current_match) < len(current_x):
-            print(next_idx_list)
+            # print(next_idx_list)
             start_frame.append(f+1)
             for i in range(len(current_x)):
                 if i not in next_idx_list:
@@ -187,88 +202,96 @@ def draw_trajectory(info):
 
         points = new_points.copy()
 
-    # # Plot the trajectory
-    #
-    # plt.figure(figsize=(18, 12))  # Adjust the figure size as needed
-    #
-    # for l in range(len(trajectories)):
-    #     print(len(trajectories[l]))
-    #     # Extract x and y coordinates separately
-    #     x_coords = [coord[0] for coord in trajectories[l]]
-    #     y_coords = [1040-coord[1] for coord in trajectories[l]]
-    #     colors = ['blue', 'magenta', 'green', 'orange', 'purple', 'orange', 'black', 'yellow']
-    #     for c in range(len(x_coords)-1):
-    #         x, y = x_coords[c], y_coords[c]
-    #         x1, y1 = x_coords[c+1], y_coords[c+1]
-    #
-    #         # if abs(x-x1)+abs(y-y1) < 150:
-    #         plt.plot([x, x1], [y, y1], marker='o', linestyle='-', c=colors[l], markersize=5)
-    #     # plt.plot(x_coords, y_coords, marker='o', linestyle='-', )
-    #
-    #     # plt.scatter(x_coords, y_coords, marker='o', linestyle='-', )
-    #
-    #     plt.title('Trajectory Plot')
-    #     plt.xlabel('X-axis')
-    #     plt.ylabel('Y-axis')
-    #     plt.grid(True)
-    #
-    # plt.legend(["cell "+str(l+1) for l in range(len(trajectories))])
-    # plt.xlim([0, 1388])
-    # plt.ylim([0, 1040])
-    # plt.show()
-    #
-    # plt.figure(figsize=(12, 9))
-    # for i in range(len(all_centers)):
-    #     for p in range(len(all_centers[i])):
-    #         plt.scatter(all_centers[i][p][0], 1040-all_centers[i][p][1], marker='o', c='b')
-    # plt.title('Observation Plot')
-    # plt.xlabel('X-axis')
-    # plt.ylabel('Y-axis')
-    # plt.grid(True)
-    # plt.xlim([0, 1388])
-    # plt.ylim([0, 1040])
-    # plt.show()
+    # Plot the trajectory
+
+    plt.figure(figsize=(18, 12))  # Adjust the figure size as needed
+    # trajectories_new = [lst for lst in trajectories if len(lst) >= 100]
+    # trajectories = trajectories_new
+    for l in range(len(trajectories)):
+        print(len(trajectories[l]))
+        # Extract x and y coordinates separately
+        x_coords = [coord[0] for coord in trajectories[l]]
+        y_coords = [1040-coord[1] for coord in trajectories[l]]
+        # colors = ['blue', 'magenta', 'green', 'orange', 'purple', 'orange', 'black', 'yellow']
+        # for c in range(len(x_coords)-1):
+        #     x, y = x_coords[c], y_coords[c]
+        #     x1, y1 = x_coords[c+1], y_coords[c+1]
+        #
+        #     # if abs(x-x1)+abs(y-y1) < 150:
+        #     plt.plot([x, x1], [y, y1], marker='o', linestyle='-', c=colors[l], markersize=5)
+        plt.plot(x_coords, y_coords, marker='o', linestyle='-', )
+
+        # plt.scatter(x_coords, y_coords, marker='o', linestyle='-', )
+
+        plt.title('Trajectory Plot', fontsize=24)
+        plt.xlabel('X-axis', fontsize=18)
+        plt.ylabel('Y-axis', fontsize=18)
+        plt.grid(True)
+
+    plt.legend(["cell "+str(l+1) for l in range(len(trajectories))], fontsize=18)
+    plt.xlim([0, 1388])
+    plt.ylim([0, 1040])
+    plt.xticks(fontsize=18)  # Change x-axis tick labels font size
+    plt.yticks(fontsize=18)
+    plt.show()
+
+    plt.figure(figsize=(18, 12))
+    for i in range(len(all_centers)):
+        for p in range(len(all_centers[i])):
+            plt.scatter(all_centers[i][p][0], 1040-all_centers[i][p][1], marker='o', c='b')
+    plt.title('Observation Plot', fontsize=24)
+    plt.xlabel('X-axis', fontsize=18)
+    plt.ylabel('Y-axis', fontsize=18)
+    plt.grid(True)
+    plt.xlim([0, 1388])
+    plt.ylim([0, 1040])
+    plt.xticks(fontsize=18)  # Change x-axis tick labels font size
+    plt.yticks(fontsize=18)
+    plt.show()
     # print(start_frame)
     # print(len(trajectories[0]))
-    for t in trajectories:
-        print(t)
+    for t in range(len(trajectories)):
+        print(len(trajectories[t]))
+
+
     return trajectories, start_frame
 
 
 def plot_tracking(traces, start_f):
     activated_cells = []
     # for f in range(len(traces[0])):
-    for f in range(30):
+    for f in range(250):
         if len(activated_cells) < len(traces):
             if f == start_f[len(activated_cells)]:
                 activated_cells.append(len(activated_cells))
-        print(activated_cells)
+        # print(activated_cells)
+        plt.figure(figsize=(12, 9))
         for c in activated_cells:
             x1, y1 = traces[c][f-start_f[c]-1][0], traces[c][f-start_f[c]-1][1]
-            plt.scatter(x1, 1040-y1)
+            plt.scatter(x1, 1040-y1, s=60)
             plt.xlim([0, 1388])
             plt.ylim([0, 1040])
-            if f > 20:
-                print(f)
-                print(x1, y1)
+            plt.grid(True)
+            # if f > 20:
+            # print(f)
+            # print(x1, y1)
         plt.legend(["cell " + str(c+1) for c in activated_cells])
-        plt.title('T='+str(f))
-        plt.show()
-        time.sleep(0.2)
+        plt.title('t='+str(f+1))
+        plt.savefig('runs/tracks/'+str(f)+'.png')
+
     # print(activated_cells)
 
 
 if __name__ == "__main__":
-    detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_11.pkl')
+    detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_14.pkl')
     # print(detection)
     all_centers = get_centers(detection)
-    tracking_info = track_cell_centers(all_centers[:30])
+    tracking_info = track_cell_centers(all_centers)
 
     traces, start_f = draw_trajectory(tracking_info)
 
-    print(start_f)
 
-    plot_tracking(traces, start_f)
+    # plot_tracking(traces, start_f)
 
 
 
