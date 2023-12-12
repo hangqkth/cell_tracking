@@ -25,12 +25,12 @@ def plot_bounding_boxes(image, bounding_boxes, root, idx):
 
 def show_detection_on_seq_data(seq_root, detections):
     img_list = [os.path.join(seq_root, f) for f in os.listdir(seq_root)]
-    os.mkdir('runs/plots/'+seq_root+'2')
+    os.mkdir('runs/plots/'+seq_root+'3')
     for i in range(len(img_list)):
         img = plt.imread(img_list[i])
         # print(img.shape)
         if len(detection[i]) > 0:
-            plot_bounding_boxes(img, detections[i], 'runs/plots/'+seq_root+'2/', i)
+            plot_bounding_boxes(img, detections[i], 'runs/plots/'+seq_root+'3/', i)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,6 @@
 import pickle
+import time
+
 import numpy as np
 from hungarian import hungarian_ac
 from kalman_two_frame import kf_one_step
@@ -138,13 +140,14 @@ def draw_trajectory(info):
     all_centers, all_x, all_association = info[0], info[1], info[2]
     trajectories = [[all_x[0][i]] for i in range(len(all_x[0]))]
     points = [i for i in range(len(all_x[0]))]  # the i_th element in all_x[f] is saved in the points[i]_th list in trajectories
-
+    start_frame = [0]
 
     for f in range(len(all_association)):
         # print(len(all_x[f]), len(all_association[f]))
         # print(all_association[f])
         if len(all_association[f]) > len(points):
             trajectories.append([])
+            start_frame.append(f)
             points.append(len(trajectories)-1)
 
         new_points = points.copy()
@@ -158,48 +161,70 @@ def draw_trajectory(info):
 
         points = new_points.copy()
 
+    # # Plot the trajectory
+    #
+    # plt.figure(figsize=(18, 12))  # Adjust the figure size as needed
+    #
+    # for l in range(len(trajectories)):
+    #     print(len(trajectories[l]))
+    #     # Extract x and y coordinates separately
+    #     x_coords = [coord[0] for coord in trajectories[l]]
+    #     y_coords = [1040-coord[1] for coord in trajectories[l]]
+    #     colors = ['blue', 'magenta', 'green', 'orange', 'purple', 'orange', 'black', 'yellow']
+    #     for c in range(len(x_coords)-1):
+    #         x, y = x_coords[c], y_coords[c]
+    #         x1, y1 = x_coords[c+1], y_coords[c+1]
+    #
+    #         # if abs(x-x1)+abs(y-y1) < 150:
+    #         plt.plot([x, x1], [y, y1], marker='o', linestyle='-', c=colors[l], markersize=5)
+    #     # plt.plot(x_coords, y_coords, marker='o', linestyle='-', )
+    #
+    #     # plt.scatter(x_coords, y_coords, marker='o', linestyle='-', )
+    #
+    #     plt.title('Trajectory Plot')
+    #     plt.xlabel('X-axis')
+    #     plt.ylabel('Y-axis')
+    #     plt.grid(True)
+    #
+    # plt.legend(["cell "+str(l+1) for l in range(len(trajectories))])
+    # plt.xlim([0, 1388])
+    # plt.ylim([0, 1040])
+    # plt.show()
+    #
+    # plt.figure(figsize=(12, 9))
+    # for i in range(len(all_centers)):
+    #     for p in range(len(all_centers[i])):
+    #         plt.scatter(all_centers[i][p][0], 1040-all_centers[i][p][1], marker='o', c='b')
+    # plt.title('Observation Plot')
+    # plt.xlabel('X-axis')
+    # plt.ylabel('Y-axis')
+    # plt.grid(True)
+    # plt.xlim([0, 1388])
+    # plt.ylim([0, 1040])
+    # plt.show()
+    # print(start_frame)
+    # print(len(trajectories[0]))
 
-    # Plot the trajectory
-
-    plt.figure(figsize=(12, 9))  # Adjust the figure size as needed
-    for l in range(len(trajectories)):
-        print(len(trajectories[l]))
-        # Extract x and y coordinates separately
-        x_coords = [coord[0] for coord in trajectories[l]]
-        y_coords = [1040-coord[1] for coord in trajectories[l]]
-        colors = ['blue', 'magenta', 'green', 'orange', 'purple']
-        for c in range(len(x_coords)-1):
-            x, y = x_coords[c], y_coords[c]
-            x1, y1 = x_coords[c+1], y_coords[c+1]
-            if abs(x-x1)+abs(y-y1) < 80:
-                plt.plot([x, x1], [y, y1], marker='o', linestyle='-', c=colors[l], markersize=5)
-        # plt.plot(x_coords, y_coords, marker='o', linestyle='-', )
-
-        # plt.scatter(x_coords, y_coords, marker='o', linestyle='-', )
-
-        plt.title('Trajectory Plot')
-        plt.xlabel('X-axis')
-        plt.ylabel('Y-axis')
-        plt.grid(True)
-
-    plt.legend(["cell "+str(l+1) for l in range(len(trajectories))])
-    plt.xlim([0, 1388])
-    plt.ylim([0, 1040])
-    plt.show()
-
-    plt.figure(figsize=(12, 9))
-    for i in range(len(all_centers)):
-        for p in range(len(all_centers[i])):
-            plt.scatter(all_centers[i][p][0], 1040-all_centers[i][p][1], marker='o', c='b')
-    plt.title('Observation Plot')
-    plt.xlabel('X-axis')
-    plt.ylabel('Y-axis')
-    plt.grid(True)
-    plt.xlim([0, 1388])
-    plt.ylim([0, 1040])
-    plt.show()
+    return trajectories, start_frame
 
 
+def plot_tracking(traces, start_f):
+    activated_cells = []
+    for f in range(len(traces[0])):
+        if len(activated_cells) < len(traces):
+            if f == start_f[len(activated_cells)]:
+                activated_cells.append(len(activated_cells))
+
+        for c in activated_cells:
+            x1, y1 = traces[c][f-start_f[c]][0], traces[c][f-start_f[c]][1]
+            plt.scatter(x1, 1040-y1)
+            plt.xlim([0, 1388])
+            plt.ylim([0, 1040])
+        plt.legend(["cell " + str(c+1) for c in activated_cells])
+        plt.title('T='+str(f))
+        plt.show()
+        time.sleep(0.2)
+    print(activated_cells)
 
 
 if __name__ == "__main__":
@@ -208,7 +233,8 @@ if __name__ == "__main__":
     all_centers = get_centers(detection)
     tracking_info = track_cell_centers(all_centers)
 
-    draw_trajectory(tracking_info)
+    traces, start_f = draw_trajectory(tracking_info)
+    plot_tracking(traces, start_f)
 
 
 

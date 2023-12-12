@@ -117,7 +117,7 @@ if __name__ == "__main__":
 
     model = torch.hub.load('ultralytics/yolov5', 'yolov5s',  _verbose=False)
 
-    model.conf = 0.15  # NMS confidence threshold
+    model.conf = 0.1  # NMS confidence threshold
     model.iou = 0.3  # NMS IoU threshold 0.5
     # agnostic = False  # NMS class-agnostic
     # multi_label = False  # NMS multiple labels per box
@@ -125,7 +125,7 @@ if __name__ == "__main__":
     # max_det = 1000  # maximum number of detections per image
     # amp = False  # Automatic Mixed Precision (AMP) inference
 
-    run_yolo_on_seq_imgs('3 min aquisition_1_C03_14', yolo_model=model)
+    run_yolo_on_seq_imgs('3 min aquisition_1_C03_11', yolo_model=model)
     # detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_11.pkl')
     # print(detection)
 
