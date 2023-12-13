@@ -205,13 +205,14 @@ def draw_trajectory(info):
     # Plot the trajectory
 
     plt.figure(figsize=(18, 12))  # Adjust the figure size as needed
+    plt.imshow(plt.imread('3 min aquisition_1_C03_14/3 min aquisition_1_C03_14_t465.TIF'))
     # trajectories_new = [lst for lst in trajectories if len(lst) >= 100]
     # trajectories = trajectories_new
     for l in range(len(trajectories)):
         print(len(trajectories[l]))
         # Extract x and y coordinates separately
         x_coords = [coord[0] for coord in trajectories[l]]
-        y_coords = [1040-coord[1] for coord in trajectories[l]]
+        y_coords = [coord[1] for coord in trajectories[l]]
         # colors = ['blue', 'magenta', 'green', 'orange', 'purple', 'orange', 'black', 'yellow']
         # for c in range(len(x_coords)-1):
         #     x, y = x_coords[c], y_coords[c]
@@ -236,9 +237,10 @@ def draw_trajectory(info):
     plt.show()
 
     plt.figure(figsize=(18, 12))
+    plt.imshow(plt.imread('3 min aquisition_1_C03_14/3 min aquisition_1_C03_14_t465.TIF'))
     for i in range(len(all_centers)):
         for p in range(len(all_centers[i])):
-            plt.scatter(all_centers[i][p][0], 1040-all_centers[i][p][1], marker='o', c='b')
+            plt.scatter(all_centers[i][p][0], all_centers[i][p][1], marker='o', c='b')
     plt.title('Observation Plot', fontsize=24)
     plt.xlabel('X-axis', fontsize=18)
     plt.ylabel('Y-axis', fontsize=18)
@@ -260,15 +262,16 @@ def draw_trajectory(info):
 def plot_tracking(traces, start_f):
     activated_cells = []
     # for f in range(len(traces[0])):
-    for f in range(250):
+    for f in range(450):
         if len(activated_cells) < len(traces):
             if f == start_f[len(activated_cells)]:
                 activated_cells.append(len(activated_cells))
         # print(activated_cells)
         plt.figure(figsize=(12, 9))
+        plt.imshow(plt.imread('3 min aquisition_1_C03_11/3 min aquisition_1_C03_11_t'+str(f+1).zfill(3)+'.TIF'))
         for c in activated_cells:
             x1, y1 = traces[c][f-start_f[c]-1][0], traces[c][f-start_f[c]-1][1]
-            plt.scatter(x1, 1040-y1, s=60)
+            plt.scatter(x1, y1, s=60)
             plt.xlim([0, 1388])
             plt.ylim([0, 1040])
             plt.grid(True)
@@ -278,12 +281,13 @@ def plot_tracking(traces, start_f):
         plt.legend(["cell " + str(c+1) for c in activated_cells])
         plt.title('t='+str(f+1))
         plt.savefig('runs/tracks/'+str(f)+'.png')
+        plt.close()
 
     # print(activated_cells)
 
 
 if __name__ == "__main__":
-    detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_14.pkl')
+    detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_11.pkl')
     # print(detection)
     all_centers = get_centers(detection)
     tracking_info = track_cell_centers(all_centers)
@@ -291,7 +295,7 @@ if __name__ == "__main__":
     traces, start_f = draw_trajectory(tracking_info)
 
 
-    # plot_tracking(traces, start_f)
+    plot_tracking(traces, start_f)
 
 
 
