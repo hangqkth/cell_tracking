@@ -287,7 +287,7 @@ def plot_tracking(traces, start_f):
 
 
 if __name__ == "__main__":
-    detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_11.pkl')
+    detection = read_list_from_file('runs/detect/3 min aquisition_1_C03_11pkl')
     # print(detection)
     all_centers = get_centers(detection)
     tracking_info = track_cell_centers(all_centers)
